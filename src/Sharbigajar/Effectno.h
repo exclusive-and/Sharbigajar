@@ -1,6 +1,6 @@
 
-#ifndef EFFECTNO_H
-#define EFFECTNO_H
+#ifndef SHARBIGAJAR_EFFECTNO_H
+#define SHARBIGAJAR_EFFECTNO_H
 
 // Type of side-effect being passed up the control graph.
 typedef enum EffectType EffectType;

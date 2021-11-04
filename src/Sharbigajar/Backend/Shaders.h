@@ -1,6 +1,6 @@
 
-#ifndef SHADERS_H
-#define SHADERS_H
+#ifndef SHARBIGAJAR_BACKEND_SHADERS_H
+#define SHARBIGAJAR_BACKEND_SHADERS_H
 
 #include <GL/glew.h>
 

@@ -1,5 +1,5 @@
 
-// Shabigajar.TestShaders
+// Shabigajar.Tests.TestShaders
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 
 #include "Effectno.h"
 #include "Text.h"
-#include "Shaders.h"
+#include "Backend/Shaders.h"
 
 
 
@@ -72,14 +72,6 @@ int main (void) {
 
     const GLuint program = compileShaderProgram (2, progInfo);
 
-
-    // Bind attributes and uniforms.
-    const AttribBinding bindings[] = {
-        {"position", 0}
-    };
-
-    bindAttribs (1, bindings, program);
-
     GLuint vertexArray;
     glGenVertexArrays (1, &vertexArray);
     glBindVertexArray (vertexArray);
@@ -90,6 +82,13 @@ int main (void) {
     glBindBuffer (GL_ARRAY_BUFFER           , vertexBuffer  );
     glBindBuffer (GL_ELEMENT_ARRAY_BUFFER   , indexBuffer   );
 
+
+    // Bind attributes and uniforms.
+    const AttribBinding bindings[] = {
+        {"position", 0}
+    };
+
+    bindAttribs (1, bindings, program);
 
     GLuint uColour = glGetUniformLocation (program, "colour");
 

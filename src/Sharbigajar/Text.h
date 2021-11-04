@@ -1,6 +1,6 @@
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef SHARBIGAJAR_TEXT_H
+#define SHARBIGAJAR_TEXT_H
 
 // Mutable text object.
 //
