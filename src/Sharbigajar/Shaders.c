@@ -30,7 +30,7 @@ ShaderInfo newShaderInfo
 
 // Load a GL shader from a file and compile it.
 //
-static const GLuint loadGLShader (ShaderInfo info)
+static const GLuint loadGLShader (const ShaderInfo info)
 {
     Text shaderSrc = textFromFile (info.filename);
     if (effectno == IOError) {
@@ -91,7 +91,7 @@ static const GLuint loadGLShader (ShaderInfo info)
 // Compile a list of shaders into a GL program.
 //
 const GLuint compileShaderProgram
-    (unsigned int numShaders, ShaderInfo infos[])
+    (unsigned int numShaders, const ShaderInfo infos[])
 {
     GLuint program = glCreateProgram ();
     GLuint *shaders = (GLuint *) malloc (numShaders * sizeof (GLuint));
@@ -120,7 +120,9 @@ const GLuint compileShaderProgram
 // Create attribute bindings within a GL program.
 //
 const GLuint bindAttribs
-    (unsigned int numAttribs, AttribBinding bindings[], const GLuint program)
+    ( unsigned int numAttribs
+    , const AttribBinding bindings[]
+    , const GLuint program )
 {
     glUseProgram (program);
 

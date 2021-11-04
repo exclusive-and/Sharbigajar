@@ -20,7 +20,7 @@ struct ShaderInfo {
 ShaderInfo newShaderInfo (GLenum, const char [], const char []);
 
 
-const GLuint compileShaderProgram (unsigned int, ShaderInfo []);
+const GLuint compileShaderProgram (unsigned int, const ShaderInfo []);
 
 
 // Shader program attribute bindings information.
@@ -32,6 +32,6 @@ struct AttribBinding {
     const GLuint bindPoint;
 };
 
-const GLuint bindAttribs (unsigned int, AttribBinding [], const GLuint);
+const GLuint bindAttribs (unsigned int, const AttribBinding [], const GLuint);
 
 #endif
