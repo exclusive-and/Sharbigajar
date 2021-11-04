@@ -5,6 +5,6 @@
 
 
 
-EffectType effectno = AllOk;
+EffectType effectno = AllOK;
 
 int effectInfo;
