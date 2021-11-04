@@ -56,3 +56,13 @@ void bindGraphicsState (GraphicsState gfxstate) {
 }
 
 
+// type Mesh
+
+// Render the mesh using a particular graphics state.
+// This just copies to the buffers and doesn't run draw calls.
+//
+GraphicsState renderMeshWith (GraphicsState gfxstate, Mesh mesh) {
+    bindGraphicsState (gfxstate);
+
+}
+

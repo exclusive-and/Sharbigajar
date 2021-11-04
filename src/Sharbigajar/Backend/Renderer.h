@@ -24,4 +24,16 @@ void freeGraphicsState (GraphicsState);
 
 void bindGraphicsState (GraphicsState);
 
+
+// Mesh object to draw to the screen.
+//
+typedef struct Mesh Mesh;
+
+struct Mesh {
+    Vector3 *vertices;
+    unsigned int *indices;
+};
+
+GraphicsState renderMeshWith (GraphicsState, Mesh);
+
 #endif
