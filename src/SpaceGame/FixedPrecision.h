@@ -113,5 +113,13 @@ inline FixedPrec fpMul (FixedPrec a, FixedPrec b) {
     };
 }
 
+
+// Convert a fixed-precision value to a float.
+//
+float fpToFloat (FixedPrec a) {
+    float decPart = (float) a.decPart / 0xFFFFFFFFFFFFFFFF;
+    return a.sign * (a.wholePart + decPart);
+}
+
 #endif
 
