@@ -24,7 +24,7 @@ struct FixedPrec {
 
 // Are two fixed-precision values equal?
 //
-inline int fpEqual (FixedPrec a, FixedPrec b) {
+static inline int fpEqual (FixedPrec a, FixedPrec b) {
     return
         a.sign      == b.sign       &&
         a.wholePart == b.wholePart  &&
@@ -33,7 +33,7 @@ inline int fpEqual (FixedPrec a, FixedPrec b) {
 
 // Compare two fixed-precision values.
 //
-inline int fpLessThan (FixedPrec a, FixedPrec b) {
+static inline int fpLessThan (FixedPrec a, FixedPrec b) {
     if (fpEqual (a, b))
         return 1;
     if (a.sign < b.sign)
@@ -50,7 +50,7 @@ inline int fpLessThan (FixedPrec a, FixedPrec b) {
 //
 // (Fancy way of saying set the sign field to 1).
 //
-inline FixedPrec fpAbs (FixedPrec a) {
+static inline FixedPrec fpAbs (FixedPrec a) {
     a.sign = 1;
     return a;
 }
@@ -68,7 +68,7 @@ inline FixedPrec fpAbs (FixedPrec a) {
 // sign of the decimal addition separately and multiplying it with the
 // carry.
 //
-inline FixedPrec fpAdd (FixedPrec a, FixedPrec b) {
+static FixedPrec fpAdd (FixedPrec a, FixedPrec b) {
     int decSign = a.decPart < b.decPart ? b.sign : a.sign;
 
     Int128 sum1 = adc64i
@@ -91,7 +91,18 @@ inline FixedPrec fpAdd (FixedPrec a, FixedPrec b) {
     };
 }
 
-// Multiply fixed-point values together.
+// Subtract fixed-precision values.
+//
+// Just take advantage of
+//
+//  a - b == a + -b
+//
+static inline FixedPrec fpSub (FixedPrec a, FixedPrec b) {
+    b.sign = -b.sign;
+    return fpAdd (a, b);
+}
+
+// Multiply fixed-precision values together.
 //
 // Fixed-precision multiplication follows the exact same algebra as
 // wide integer multiplication. See [WideInt.h:mul128] for details.
@@ -100,23 +111,75 @@ inline FixedPrec fpAdd (FixedPrec a, FixedPrec b) {
 // factor should always be 64, so we can just take the hi and lo bits
 // of our 128-bit representation respectively.
 //
-inline FixedPrec fpMul (FixedPrec a, FixedPrec b) {
+static FixedPrec fpMul (FixedPrec a, FixedPrec b) {
+    /*
     uint64_t    prod1 = a.wholePart * b.wholePart;
-    UInt128     prod2 = mul128u (a.wholePart, b.decPart);
-    UInt128     prod3 = mul128u (a.decPart, b.wholePart);
-    UInt128     prod4 = mul128u (a.decPart, b.decPart);
+    UInt128     prod2 = mul64u (a.wholePart, b.decPart);
+    UInt128     prod3 = mul64u (a.decPart, b.wholePart);
+    UInt128     prod4 = mul64u (a.decPart, b.decPart);
 
     return (FixedPrec) {
         .sign       = a.sign * b.sign,
         .wholePart  = prod1 + prod2.hi + prod3.hi,
         .decPart    = prod2.lo + prod3.lo + prod4.hi
     };
+    */
+
+    UInt128 intProd = mul64u
+        ( newUInt128 (a.wholePart, a.decPart)
+        , newUInt128 (b.wholePart, b.decPart) );
+
+    return (FixedPrec) {
+        .sign       = a.sign * b.sign,
+        .wholePart  = intProd.hi,
+        .decPart    = intProd.lo
+    };
+}
+
+// Divide two fixed-precision values.
+//
+static FixedPrec fpDiv (FixedPrec a, FixedPrec b) {
+
+}
+
+// Square a fixed-precision value.
+//
+static inline FixedPrec fpSqr (FixedPrec a) {
+    return fpMul (a, a);
+}
+
+// Compute the square root of a fixed-precision value.
+//
+static FixedPrec fpSqrt (FixedPrec a) {
+
+}
+
+
+// 'Vec3' of 'FixedPrec's.
+//
+typedef struct Vec3FixedPrec Vec3FixedPrec;
+
+struct Vec3FixedPrec {
+    FixedPrec x;
+    FixedPrec y;
+    FixedPrec z;
+};
+
+// Compute the distance between two fixed-precision 'Vec3's.
+//
+static FixedPrec fp3Distance (Vec3FixedPrec a, Vec3FixedPrec b) {
+    FixedPrec
+        x2 = fpSqr (fpSub (a.x, b.x)),
+        y2 = fpSqr (fpSub (a.y, b.y)),
+        z2 = fpSqr (fpSub (a.z, b.z));
+
+    return fpSqrt (fpAdd (fpAdd (x2, y2), z2));
 }
 
 
 // Convert a fixed-precision value to a float.
 //
-float fpToFloat (FixedPrec a) {
+static float fpToFloat (FixedPrec a) {
     float decPart = (float) a.decPart / 0xFFFFFFFFFFFFFFFF;
     return a.sign * (a.wholePart + decPart);
 }

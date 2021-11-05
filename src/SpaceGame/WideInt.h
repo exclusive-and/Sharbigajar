@@ -14,6 +14,12 @@ struct UInt128 {
     uint64_t lo;
 };
 
+// Create a new 128 bit unsigned integer.
+//
+static inline UInt128 newUInt128 (uint64_t hi, uint64_t lo) {
+    return (UInt128) { hi, lo };
+}
+
 // Add together two 64-bit integers, and encode the carry overflow
 // result in the highest 64 bits of 'UInt128'.
 //
@@ -31,7 +37,7 @@ struct UInt128 {
 // If the top half overflows after all this, its own upper bits will
 // provide us exactly the carry-out we're looking for.
 //
-inline UInt128 adc64u (uint64_t a, uint64_t b) {
+static inline UInt128 adc64u (uint64_t a, uint64_t b) {
     uint64_t
         sum1 = LO64(a) + LO64(b),
         sum2 = HI64(a) + HI64(b);
@@ -71,7 +77,7 @@ inline UInt128 adc64u (uint64_t a, uint64_t b) {
 //  - get the overlaps to be added to each significant term;
 //  - add everything up and return.
 //
-inline UInt128 mul128u (uint64_t a, uint64_t b) {
+static inline UInt128 mul64u (uint64_t a, uint64_t b) {
     uint64_t
         prod1 = LO64(a) * LO64(b),
         prod2 = HI64(a) * LO64(b),
@@ -93,6 +99,40 @@ inline UInt128 mul128u (uint64_t a, uint64_t b) {
     };
 }
 
+// Divide two 128-bit unsigned integers.
+//
+static inline UInt128 div128u (UInt128 a, UInt128 b) {
+    uint64_t
+        work1       = a.hi,
+        work2       = a.lo,
+        remainder   = 0;
+
+    for (int ix = 64; ix > 0; ix--) {
+        remainder <<= 1;
+
+        if (work2 & 1)
+            remainder++;
+        work2 >>= 1;
+    }
+
+    uint64_t quot1 = remainder / b.hi;
+    remainder -= quot1 * b.hi;
+
+    for (int ix = 64; ix > 0; ix--) {
+        quot1 <<= 1;
+        remainder <<= 1;
+
+        if (work1 & 1)
+            remainder++;
+        work1 >>= 1;
+    }
+
+    uint64_t quot2 = remainder / b.lo;
+    remainder -= quot2 * b.lo;
+
+    return newUInt128 (quot1 + quot2, remainder);
+}
+
 
 // 128-bit signed integer representation.
 //
@@ -107,7 +147,7 @@ struct Int128 {
 //
 // The final result will inherit the sign of the top half.
 //
-inline newInt128 (int64_t top, uint64_t bottom) {
+static inline newInt128 (int64_t top, uint64_t bottom) {
     int sign = top < 0 ? -1 : 1;
 
     return (Int128) {
@@ -128,7 +168,7 @@ inline newInt128 (int64_t top, uint64_t bottom) {
 // perform our unsigned addition on them, and then cast them back to
 // signed integers.
 //
-inline Int64_t adc64i (int64_t a, int64_t b) {
+static inline Int64_t adc64i (int64_t a, int64_t b) {
     UInt128 ones = adc64u ((uint64_t) a, (uint64_t) b);
 
     return (Int64_t) {
