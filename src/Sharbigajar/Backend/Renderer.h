@@ -30,7 +30,10 @@ void bindGraphicsState (GraphicsState);
 typedef struct Mesh Mesh;
 
 struct Mesh {
-    Vector3 *vertices;
+    unsigned int numVertices;
+    Vec3Float *vertices;
+
+    unsigned int numIndices;
     unsigned int *indices;
 };
 

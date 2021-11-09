@@ -64,5 +64,18 @@ void bindGraphicsState (GraphicsState gfxstate) {
 GraphicsState renderMeshWith (GraphicsState gfxstate, Mesh mesh) {
     bindGraphicsState (gfxstate);
 
+    glBufferData
+        ( GL_ARRAY_BUFFER
+        , sizeof (Vec3Float) * numVertices
+        , mesh.vertices
+        , GL_DYNAMIC_DRAW);
+
+    glBufferData
+        ( GL_ELEMENT_ARRAY_BUFFER
+        , sizeof (unsigned int) * mesh.numIndices
+        , mesh.indices
+        , GL_DYNAMIC_DRAW );
+
+    return gfxstate;
 }
 
