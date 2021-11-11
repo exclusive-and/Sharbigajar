@@ -2,8 +2,10 @@
 #ifndef SPACE_GAME_WIDE_INT_H
 #define SPACE_GAME_WIDE_INT_H
 
-#define HI64(x)     (0x00000000FFFFFFFF & (x >> 32))
-#define LO64(x)     (0x00000000FFFFFFFF & x)
+#define MSB64(x)    (0x8000000000000000ULL & (x))
+
+#define HI64(x)     (0x00000000FFFFFFFFULL & ((x) >> 32))
+#define LO64(x)     (0x00000000FFFFFFFFULL & (x))
 
 // 128-bit unsigned integer representation.
 //
@@ -19,6 +21,109 @@ struct UInt128 {
 static inline UInt128 newUInt128 (uint64_t hi, uint64_t lo) {
     return (UInt128) { hi, lo };
 }
+
+// Shift a 128-bit integer left by an arbitrary amount.
+//
+static inline UInt128 shl128u (UInt128 a, uint32_t n) {
+    uint64_t carry =
+        n < 64 ? a.lo >> (64 - n) : a.lo << (n - 64);
+
+    return (UInt128) {
+        .hi = (a.hi << n) | carry,
+        .lo = a.lo << n
+    };
+}
+
+// Shift a 128-bit integer right by an arbitrary amount.
+//
+static inline UInt128 shr128u (UInt128 a, uint32_t n) {
+    uint64_t borrow =
+        n < 64 ? a.hi << (64 - n) : a.hi >> (n - 64);
+
+    return (UInt128) {
+        .hi = a.hi >> n,
+        .lo = (a.lo >> n) | borrow
+    };
+}
+
+// Add two 128-bit unsigned integers together.
+//
+static inline UInt128 add128u (UInt128 a, UInt128 b) {
+    uint64_t
+        sum1 = LO64(a.lo) + LO64(b.lo),
+        sum2 = HI64(a.lo) + HI64(b.lo),
+        sum3 = LO64(a.hi) + LO64(b.hi),
+        sum4 = HI64(a.hi) + HI64(b.hi);
+
+    return (UInt128) {
+        .lo = (sum2 << 32) + sum1,
+        .hi = (sum4 << 32) + sum3 + HI64(sum2)
+    };
+}
+
+// Subtract two 128-bit unsigned integers.
+//
+// Returns 0 if second operand is greater than the first.
+//
+static inline UInt128 sub128u (UInt128 a, UInt128 b) {
+    const uint64_t extra = 0x200000000ULL;
+
+    uint64_t
+        sub1 = extra + LO64(a.lo) - LO64(b.lo),
+        sub2 = extra + HI64(a.lo) - LO64(b.lo),
+        sub3 = extra + LO64(a.hi) - LO64(b.hi),
+        sub4 = extra + HI64(a.hi) - LO64(b.hi);
+
+    sub2 -= HI64(sub1) ^ 2;
+    sub3 -= HI64(sub2) ^ 2;
+    sub4 -= HI64(sub3) ^ 2;
+
+    uint64_t nuke = HI64(sub4) >> 1;
+
+    return (UInt128) {
+        .lo = ((LO64(sub2) << 32) + LO64(sub1)) * nuke,
+        .hi = ((LO64(sub4) << 32) + LO64(sub3)) * nuke
+    };
+}
+
+// Divide two 128-bit unsigned integers.
+//
+typedef struct Quotient128 Quotient128;
+
+struct Quotient128 {
+    UInt128 quotient;
+    UInt128 remainder;
+};
+
+static inline Quotient128 div128u (UInt128 a, UInt128 b) {
+    // Exceptional case
+    if (b.hi == 0 && b.lo == 0) {
+        printf ("error: div128u: divide by zero exception\n");
+        return b;
+    }
+
+    UInt128
+        quotient    = newUInt128 (0, 0),
+        remainder   = newUInt128 (0, 0);
+
+    for (uint32_t ix = 0; ix < 128; ix++) {
+        quotient = shl128u (quotient, 1);
+        remainder = shl128u (remainder, 1);
+
+        remainder.lo |= shr128u (a, ix).lo & 1;
+
+        if (lt128u (remainder, b)) {
+            remainder = sub128u (remainder, b);
+            quotient = add128u (quotient, 1);
+        }
+    }
+
+    return (Quotient128) {
+        .quotient   = quotient,
+        .remainder  = remainder
+    };
+}
+
 
 // Add together two 64-bit integers, and encode the carry overflow
 // result in the highest 64 bits of 'UInt128'.
@@ -97,40 +202,6 @@ static inline UInt128 mul64u (uint64_t a, uint64_t b) {
         .lo = prod1 + over1,
         .hi = prod4 + over4
     };
-}
-
-// Divide two 128-bit unsigned integers.
-//
-static inline UInt128 div128u (UInt128 a, UInt128 b) {
-    uint64_t
-        work1       = a.hi,
-        work2       = a.lo,
-        remainder   = 0;
-
-    for (int ix = 64; ix > 0; ix--) {
-        remainder <<= 1;
-
-        if (work2 & 1)
-            remainder++;
-        work2 >>= 1;
-    }
-
-    uint64_t quot1 = remainder / b.hi;
-    remainder -= quot1 * b.hi;
-
-    for (int ix = 64; ix > 0; ix--) {
-        quot1 <<= 1;
-        remainder <<= 1;
-
-        if (work1 & 1)
-            remainder++;
-        work1 >>= 1;
-    }
-
-    uint64_t quot2 = remainder / b.lo;
-    remainder -= quot2 * b.lo;
-
-    return newUInt128 (quot1 + quot2, remainder);
 }
 
 
